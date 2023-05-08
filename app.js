@@ -65,8 +65,15 @@ app.post("/register", async (req, res) => {
   }
 });
 
+const checkLoggedIn = async (req, res, next) => {
+  if (req.isAuthenticated()) {
+    res.redirect("/profile");
+  }
+  next();
+};
+
 //login get page
-app.get("/login", (req, res) => {
+app.get("/login", checkLoggedIn, (req, res) => {
   res.render("login");
 });
 
@@ -79,14 +86,30 @@ app.post(
   })
 );
 
+const checkAuthenticated = async (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect("/login");
+};
+
 //get profile page
-app.get("/profile", (req, res) => {
+app.get("/profile", checkAuthenticated, (req, res) => {
   res.render("profile");
 });
 
 // logout
-app.get("/logout", (req, res) => {
-  res.redirect("/");
+app.get("/logout", (req, res, next) => {
+  try {
+    req.logout((err) => {
+      if (err) {
+        return next(err);
+      }
+      res.redirect("/");
+    });
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
 });
 
 module.exports = app;
